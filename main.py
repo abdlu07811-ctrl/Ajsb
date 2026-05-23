@@ -1,27 +1,19 @@
-import os
 import time
 from instagrapi import Client
 
-# تسجيل الدخول
+# بيانات الدخول
 username = "5s.wd"
-password = "07823520Aa" # يرجى التأكد من كلمة السر وتغييرها بعد انتهاء التجربة للأمان
+password = "07823520Aa"
 
 cl = Client()
-try:
-    cl.login(username, password)
-    print("تم الاتصال بإنستغرام بنجاح!")
-except Exception as e:
-    print(f"حدث خطأ في الاتصال: {e}")
 
-# حلقة فحص الرسائل
-while True:
-    try:
-        # فحص الرسائل الجديدة
-        threads = cl.direct_threads()
-        for thread in threads:
-            print(f"فحص محادثة: {thread.id}")
-    except Exception as e:
-        print(f"حدث خطأ أثناء الفحص: {e}")
-    
-    # انتظار لمدة دقيقة قبل الفحص التالي
-    time.sleep(60)
+# إعدادات لزيادة الأمان وتجاوز الحظر
+cl.request_timeout = 10 
+
+try:
+    print("جاري محاولة تسجيل الدخول...")
+    cl.login(username, password)
+    print("تم تسجيل الدخول بنجاح!")
+except Exception as e:
+    print(f"حدث خطأ: {e}")
+    # إذا فشل، سيطبع لنا السبب بالضبط
