@@ -1,19 +1,23 @@
 import os
 import time
-from dotenv import load_dotenv
 from instagrapi import Client
 
-load_dotenv()
+# بيانات تسجيل الدخول
+username = "5s.wd"
+password = "07823520Aa"
+
 cl = Client()
 
 try:
-    cl.login(os.getenv("INSTA_USER"), os.getenv("INSTA_PASS"))
+    cl.login(username, password)
     print("تم الاتصال بإنستغرام بنجاح!")
+    # الحصول على معرف حسابك لاستقبال الطلبات عليه
+    ADMIN_ID = cl.user_id_from_username("85k.w")
 except Exception as e:
     print(f"حدث خطأ في الاتصال: {e}")
+    ADMIN_ID = None
 
 user_states = {}
-ADMIN_ID = "73347573618" 
 
 def handle_message(thread_id, user_id, text):
     if user_id not in user_states:
@@ -39,8 +43,10 @@ def handle_message(thread_id, user_id, text):
         
         cl.direct_send("يا سلام! تم تأكيد طلبك بنجاح. 🎉 سنقوم بتجهيزه فوراً وسيتواصل معك فريقنا قريباً. شكراً لثقتك بنا! 🙏", thread_ids=[thread_id])
         
-        order_summary = f"🚨 طلب جديد من العميل!\n\n📦 المنتج: {order['product']}\n👤 الاسم: {order['name']}\n📞 الهاتف: {order['phone']}\n📍 العنوان: {order['address']}"
-        cl.direct_send(order_summary, user_ids=[ADMIN_ID])
+        # إرسال الطلب لحسابك 85k.w
+        if ADMIN_ID:
+            order_summary = f"🚨 طلب جديد من العميل!\n\n📦 المنتج: {order['product']}\n👤 الاسم: {order['name']}\n📞 الهاتف: {order['phone']}\n📍 العنوان: {order['address']}"
+            cl.direct_send(order_summary, user_ids=[ADMIN_ID])
         
         del user_states[user_id]
 
@@ -55,5 +61,4 @@ while True:
     except Exception as e:
         print(f"حدث خطأ أثناء الفحص: {e}")
     
-    # انتظار لمدة دقيقة قبل الفحص التالي
     time.sleep(60)
