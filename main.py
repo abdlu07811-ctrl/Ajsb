@@ -13,8 +13,9 @@ if os.path.exists(session_file):
     try:
         print("🔄 جاري تحميل الجلسة الجاهزة...")
         cl.load_settings(session_file)
-        cl.user_id = "78306536983"
-        print("🚀 تم شحن الجلسة بنجاح!")
+        # استخراج المعرف تلقائياً من الجلسة المحملة لضمان التوافق
+        cl.user_id = cl.authenticated_user_id
+        print(f"🚀 تم شحن الجلسة بنجاح! المعرف: {cl.user_id}")
     except Exception as e:
         print(f"❌ فشل تشغيل الجلسة: {e}")
 else:
@@ -50,7 +51,8 @@ products = load_products()
 
 def auto_reply():
     try:
-        threads = cl.direct_threads(amount=3)
+        # استخدام دالة الجلب الافتراضية بدون مكملات لتفادي خطأ 400
+        threads = cl.direct_threads()
     except Exception as e:
         print(f"جاري فحص الرسائل... (تحديث دوري): {e}")
         return
@@ -62,9 +64,9 @@ def auto_reply():
         last_message = thread.messages[0]
         sender_username = thread.users[0].username
         sender_id = thread.users[0].pk
-        text = last_message.text.strip()
+        text = last_message.text.strip() if last_message.text else ""
         
-        if last_message.user_id == cl.user_id:
+        if not text or last_message.user_id == cl.user_id:
             continue
 
         # [1] أوامر المسؤول
@@ -106,7 +108,6 @@ def auto_reply():
                 state["address"] = text
                 save_order(sender_username, full_name, state["product"], state["phone"], state["address"])
                 
-                # تقصير مفرط للنصوص المدمجة لمنع خطأ السطر 111 القديم
                 p_booked = state["product"]
                 confirm_msg = f"🎉 تم تأكيد حجزك لـ {p_booked} بنجاح يا {full_name}!"
                 cl.direct_send(confirm_msg, thread_ids=[thread.id])
@@ -143,6 +144,10 @@ def auto_reply():
             p_list = [f"🔹 {k}: {v}" for k, v in products.items()]
             reply_text = "📦 منتجاتنا الحالية:\n" + "\n".join(p_list) + "\n\n💡 للحجز أرسل: حجز اسم المنتج"
             cl.direct_send(reply_text, thread_ids=[thread.id])
+
+while True:
+    auto_reply()
+    time.sleep(45)
 
 while True:
     auto_reply()
