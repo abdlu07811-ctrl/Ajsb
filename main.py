@@ -53,30 +53,4 @@ products = load_products()
 
 def auto_reply():
     try:
-        threads = cl.direct_threads(amount=3)
-    except Exception as e:
-        print(f"جاري فحص الرسائل... (تحديث دوري): {e}")
-        return
-
-    for thread in threads:
-        if not thread.messages: 
-            continue
-        last_message = thread.messages[0]
-        sender_username = thread.users[0].username
-        sender_id = thread.users[0].pk
-        text = last_message.text.strip()
-        
-        if last_message.user_id == cl.user_id:
-            continue
-
-        # [1] أوامر المسؤول (85.kw)
-        if sender_username == admin_username:
-            if text.startswith("إضافة:"):
-                try:
-                    _, name, price = text.split(":")
-                    products[name] = price
-                    save_products(products)
-                    cl.direct_send(f"✅ تم حفظ {name} بسعر {price}", thread_ids=[thread.id])
-                except:
-                    cl.direct_send("خطأ: استخدم صيغة (إضافة:اسم:سعر)", thread_ids=[thread.id])
-            elif
+        threads = cl.direct_threads(amount=3
