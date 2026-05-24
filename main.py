@@ -1,5 +1,4 @@
 from instagrapi import Client
-import requests
 import time
 import os
 
@@ -9,28 +8,29 @@ cl = Client()
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
-# 2. قيم الكوكيز المستخرجة من المتصفح لتوثيق الجلسة
-session_id = "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw"
-ds_user_id = "78306536983"
-csrftoken = "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt"
+# 2. حقن الكوكيز بالطريقة الرسمية والمستقرة للمكتبة لمنع أخطاء الـ session
+init_settings = {
+    "uuids": {
+        "phone_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
+        "uuid": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
+        "client_session_id": "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw",
+        "advertising_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
+    },
+    "cookies": [
+        {"name": "sessionid", "value": "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw", "domain": ".instagram.com", "path": "/"},
+        {"name": "ds_user_id", "value": "78306536983", "domain": ".instagram.com", "path": "/"},
+        {"name": "csrftoken", "value": "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt", "domain": ".instagram.com", "path": "/"},
+        {"name": "mid", "value": "ahl9eAABAAGhqrmqNLv14gpWLuW2", "domain": ".instagram.com", "path": "/"},
+        {"name": "ig_did", "value": "A4F839F0-4147-479E-80CE-4C542E5CD0BE", "domain": ".instagram.com", "path": "/"}
+    ]
+}
 
-# 3. إعداد الكوكيز وحقنها داخل المكتبة بالطريقة الصحيحة
-cookie_jar = requests.cookies.RequestsCookieJar()
-cookie_jar.set("sessionid", session_id, domain=".instagram.com")
-cookie_jar.set("ds_user_id", ds_user_id, domain=".instagram.com")
-cookie_jar.set("csrftoken", csrftoken, domain=".instagram.com")
-cookie_jar.set("mid", "ahl9eAABAAGhqrmqNLv14gpWLuW2", domain=".instagram.com")
-cookie_jar.set("ig_did", "A4F839F0-4147-479E-80CE-4C542E5CD0BE", domain=".instagram.com")
-
-cl.private.session.cookies.update(cookie_jar)
-
-# 4. محاولة الاتصال المباشر
 try:
-    cl.delay_range = [2, 5]
-    cl.user_id = ds_user_id
-    print("✅ تم تخطي خطأ التوجيه وحقن الكوكيز بنجاح!")
+    cl.set_settings(init_settings)
+    cl.user_id = "78306536983"
+    print("✅ تم تخطي خطأ التوجيه وإعداد الجلسة بنجاح!")
 except Exception as e:
-    print(f"⚠️ تنبيه أثناء إعداد الجلسة: {e}")
+    print(f"⚠️ تنبيه أثناء ضبط الإعدادات: {e}")
 
 # إعداد المتغيرات والملفات
 admin_username = "85.kw"
@@ -132,17 +132,7 @@ def auto_reply():
 
         if sender_id not in welcomed_users:
             welcome_msg = f"👋 أهلاً بك يا {full_name} في متجرنا الإلكتروني!"
-            cl.direct_send(welcome_msg, thread_ids=[thread.id])
-            welcomed_users.add(sender_id)
-            time.sleep(1)
-        
-        if "حجز" in text:
-            product_name = text.replace("حجز", "").strip()
-            if product_name in products:
-                user_states[sender_id] = {
-                    "step": "waiting_for_phone",
-                    "product": product_name,
-                    "phone": "",
+            cl.direct_send(welcome_msg, thread_ids=
                     "address": ""
                 }
                 cl.direct_send(f"🛍️ لقد اخترت حجز: {product_name}.\nيرجى كتابة رقم هاتفك للتواصل ومتابعة الطلب:", thread_ids=[thread.id])
