@@ -4,46 +4,39 @@ import os
 
 cl = Client()
 
-# 1. إعدادات الحماية والتمويه لمنع التوجيه المكرر
+# إعدادات الحماية والتمويه لمنع الحظر
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
-# 2. قيم الجلسة المستخرجة من حسابك
-session_id = "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw"
-ds_user_id = "78306536983"
-csrftoken = "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt"
+# بيانات حساب البوت - استبدلها ببياناتك الفعلية بدقة
+USERNAME = "os.wd" 
+PASSWORD = "07823520Aa"
 
-# 3. إعداد وحقن الكوكيز بشكل فردي ومستقر لتفادي أخطاء البنية
+session_file = "instagram_session.json"
+
+# محاولة تسجيل الدخول الذكي
 try:
-    cl.set_settings({})  # تهيئة الإعدادات كقاموس فارغ أولاً
-    cl.user_id = ds_user_id
-    
-    # حقن الكوكيز الأساسية داخل دالة الكوكيز الخاصة بالعميل مباشرة
-    cl.set_cookies({
-        "sessionid": session_id,
-        "ds_user_id": ds_user_id,
-        "csrftoken": csrftoken,
-        "mid": "ahl9eAABAAGhqrmqNLv14gpWLuW2",
-        "ig_did": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
-    })
-    print("✅ تم حقن الكوكيز بنجاح!")
+    if os.path.exists(session_file):
+        print("🔄 جاري محاولة جلب الجلسة المحفوظة...")
+        cl.load_settings(session_file)
+        try:
+            cl.get_timeline_feed()
+            print("🚀 تم تشغيل البوت بنجاح عبر الجلسة المحفوظة!")
+        except Exception:
+            print("⚠️ انتهت صلاحية الجلسة المحفوظة، جاري إعادة تسجيل الدخول المباشر...")
+            cl.login(USERNAME, PASSWORD)
+            cl.dump_settings(session_file)
+            print("✅ تم تسجيل الدخول وتحديث ملف الجلسة بنجاح!")
+    else:
+        print("🔐 جاري تسجيل الدخول المباشر لأول مرة...")
+        cl.login(USERNAME, PASSWORD)
+        cl.dump_settings(session_file)
+        print("✅ تم تسجيل الدخول بنجاح وحفظ الجلسة!")
 except Exception as e:
-    print(f"⚠️ تنبيه أثناء إعداد الكوكيز: {e}")
+    print(f"❌ فشل تسجيل الدخول: {e}")
+    print("💡 نصيحة: تأكد من إيقاف التحقق الثنائي (2FA) في الحساب، وافتح التطبيق للموافقة على تسجيل الدخول إذا ظهر لك تنبيه أمان.")
 
-# آلية تحقق وتسجيل دخول احتياطية لضمان عمل البوت
-try:
-    print("🔄 جاري التحقق من حالة الجلسة...")
-    cl.get_timeline_feed()  # طلب خفيف للتحقق من الاتصال
-    print("🚀 تم الاتصال بنجاح! البوت يعمل الآن بدون قيود.")
-except Exception:
-    print("⚠️ الكوكيز المباشرة لم تنجح، جاري محاولة الدخول عبر معرف الجلسة الاحتياطي...")
-    try:
-        cl.login_by_sessionid(session_id)
-        print("✅ تم تسجيل الدخول بنجاح عبر معرف الجلسة!")
-    except Exception as login_err:
-        print(f"❌ فشل تسجيل الدخول النهائي: {login_err}")
-
-# إعداد المتغيرات والملفات
+# إعداد المتغيرات والملفات لنظام المتجر
 admin_username = "85.kw"
 products_file = "products.txt"
 orders_file = "orders.txt"
@@ -111,7 +104,7 @@ def auto_reply():
                     cl.direct_send("خطأ: استخدم صيغة (حذف:اسم)", thread_ids=[thread.id])
             continue
                     
-        # [2] نظام العملاء (الترحيب، الحجز، وجمع البيانات)
+        # [2] نظام العملاء
         full_name = thread.users[0].full_name or "عزيزي العميل"
         
         if sender_id in user_states:
