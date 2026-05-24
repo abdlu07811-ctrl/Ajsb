@@ -1,0 +1,19 @@
+{
+  "uuids": {
+    "phone_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
+    "uuid": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
+    "client_session_id": "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw",
+    "advertising_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
+  },
+  "mid": "ahl9eAABAAGhqrmqNLv14gpWLuW2",
+  "ig_did": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
+  "authorization_data": {},
+  "cookies": {
+    "sessionid": "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw",
+    "ds_user_id": "78306536983",
+    "csrftoken": "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt",
+    "mid": "ahl9eAABAAGhqrmqNLv14gpWLuW2",
+    "ig_did": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
+  }
+}
+
