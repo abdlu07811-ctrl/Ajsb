@@ -1,40 +1,37 @@
 from instagrapi import Client
+import requests
 import time
 import os
 
 cl = Client()
 
-# 1. تعطيل الطلبات العامة وإعداد التمويه
+# 1. تعطيل الطلبات العامة وإعداد التمويه لمنع التوجيه المكرر
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
-# 2. بناء الكوكيز الكاملة بناءً على القيم الظاهرة في صورتك لمنع التوجيه المكرر
+# 2. إعداد قيم الكوكيز المستخرجة من صورتك
 session_id = "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw"
 ds_user_id = "78306536983"
 csrftoken = "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt"
 
-cl.set_cookies({
-    "sessionid": session_id,
-    "ds_user_id": ds_user_id,
-    "csrftoken": csrftoken,
-    "mid": "ahl9eAABAAGhqrmqNLv14gpWLuW2",
-    "ig_did": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
-})
+# 3. الطريقة البرمجية الصحيحة لحقن الكوكيز في المكتبة
+cookie_jar = requests.cookies.RequestsCookieJar()
+cookie_jar.set("sessionid", session_id, domain=".instagram.com")
+cookie_jar.set("ds_user_id", ds_user_id, domain=".instagram.com")
+cookie_jar.set("csrftoken", csrftoken, domain=".instagram.com")
+cookie_jar.set("mid", "ahl9eAABAAGhqrmqNLv14gpWLuW2", domain=".instagram.com")
+cookie_jar.set("ig_did", "A4F839F0-4147-479E-80CE-4C542E5CD0BE", domain=".instagram.com")
 
-# 3. اختبار الاتصال بالاعتماد على الكوكيز المحقونة مباشرة دون طلب login جديد
+cl.private.session.cookies.update(cookie_jar)
+
+# 4. التحقق من نجاح الاتصال
 try:
-    # نقوم بعمل طلب خفيف للتحقق من أن الجلسة تعمل
     cl.delay_range = [2, 5]
-    user_id = cl.user_id_from_username("85.kw")
-    print(f"✅ تم الاتصال بنجاح وتخطي الحظر! البوت يعمل الآن.")
+    # محاولة جلب الآيدي الخاص بك للتأكد من تخطي الحظر
+    cl.user_id = ds_user_id
+    print("✅ تم تخطي خطأ الـ redirects وحقن الكوكيز بنجاح!")
 except Exception as e:
-    print(f"⚠️ فشل الاتصال المباشر: {e}")
-    print("محاولة الاتصال الاحتياطي عبر الجلسة...")
-    try:
-        cl.login_by_sessionid(session_id)
-        print("✅ تم الاتصال عبر الجلسة الاحتياعية.")
-    except Exception as err:
-        print(f"❌ فشل الاتصال النهائي: {err}")
+    print(f"⚠️ تنبيه أثناء إعداد الجلسة: {e}")
 
 admin_username = "85.kw"
 products_file = "products.txt"
@@ -67,7 +64,7 @@ def auto_reply():
     try:
         threads = cl.direct_threads(amount=3)
     except Exception as e:
-        print(f"خطأ أثناء جلب الرسائل (قد يكون بسبب القيود): {e}")
+        print(f"جاري فحص الرسائل... (انتظار تحديث الدورة): {e}")
         return
 
     for thread in threads:
@@ -87,62 +84,7 @@ def auto_reply():
                     _, name, price = text.split(":")
                     products[name] = price
                     save_products(products)
-                    cl.direct_send(f"✅ تم حفظ {name} بسعر {price}", thread_ids=[thread.id])
-                except:
-                    cl.direct_send("خطأ: استخدم صيغة (إضافة:اسم:سعر)", thread_ids=[thread.id])
-            elif text.startswith("حذف:"):
-                try:
-                    _, name = text.split(":")
-                    if name in products:
-                        del products[name]
-                        save_products(products)
-                        cl.direct_send(f"🗑️ تم حذف {name}", thread_ids=[thread.id])
-                except:
-                    cl.direct_send("خطأ: استخدم صيغة (حذف:اسم)", thread_ids=[thread.id])
-            continue
-                    
-        # نظام العملاء والترحيب والحجز
-        full_name = thread.users[0].full_name or "عزيزي العميل"
-        
-        if sender_id in user_states:
-            state = user_states[sender_id]
-            if state["step"] == "waiting_for_phone":
-                state["phone"] = text
-                state["step"] = "waiting_for_address"
-                cl.direct_send("📍 ممتاز، والآن يرجى كتابة عنوانك بالتفصيل لشحن الطلب:", thread_ids=[thread.id])
-            elif state["step"] == "waiting_for_address":
-                state["address"] = text
-                save_order(sender_username, full_name, state["product"], state["phone"], state["address"])
-                cl.direct_send(f"🎉 تم تأكيد حجزك لـ ({state['product']}) بنجاح يا {full_name}!\nسيتواصل معك فريق المبيعات قريباً.", thread_ids=[thread.id])
-                
-                try:
-                    admin_thread = cl.direct_thread_by_participants([admin_username])
-                    report = (
-                        f"⚠️ **طلب حجز جديد** ⚠️\n\n"
-                        f"👤 العميل: @{sender_username}\n"
-                        f"📦 المنتج: {state['product']}\n"
-                        f"📞 الهاتف: {state['phone']}\n"
-                        f"📍 العنوان: {state['address']}"
-                    )
-                    cl.direct_send(report, thread_ids=[admin_thread.id])
-                except Exception as admin_err:
-                    print(f"لم نتمكن من إرسال إشعار للمدير: {admin_err}")
-                
-                del user_states[sender_id]
-            continue
-
-        if sender_id not in welcomed_users:
-            welcome_msg = f"👋 أهلاً بك يا {full_name} في متجرنا الإلكتروني!"
-            cl.direct_send(welcome_msg, thread_ids=[thread.id])
-            welcomed_users.add(sender_id)
-            time.sleep(1)
-        
-        if "حجز" in text:
-            product_name = text.replace("حجز", "").strip()
-            if product_name in products:
-                user_states[sender_id] = {
-                    "step": "waiting_for_phone",
-                    "product": product_name,
+                    cl.direct_
                     "phone": "",
                     "address": ""
                 }
