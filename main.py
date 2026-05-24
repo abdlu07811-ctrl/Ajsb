@@ -8,7 +8,7 @@ cl = Client()
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
-# 2. حقن الكوكيز بالطريقة الرسمية والمستقرة للمكتبة لمنع أخطاء الـ session
+# 2. حقن إعدادات الجلسة والكوكيز المستخرجة من حسابك
 init_settings = {
     "uuids": {
         "phone_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
@@ -28,7 +28,7 @@ init_settings = {
 try:
     cl.set_settings(init_settings)
     cl.user_id = "78306536983"
-    print("✅ تم تخطي خطأ التوجيه وإعداد الجلسة بنجاح!")
+    print("✅ تم إعداد الجلسة بنجاح وتخطي الحظر!")
 except Exception as e:
     print(f"⚠️ تنبيه أثناء ضبط الإعدادات: {e}")
 
@@ -50,9 +50,9 @@ def load_products():
                 products[key] = val
     return products
 
-def save_products(products_):
+def save_products(products_dict):
     with open(products_file, "w", encoding="utf-8") as f:
-        for k, v in products_.items():
+        for k, v in products_dict.items():
             f.write(f"{k}:{v}\n")
 
 def save_order(username, full_name, product, phone, address):
@@ -100,7 +100,7 @@ def auto_reply():
                     cl.direct_send("خطأ: استخدم صيغة (حذف:اسم)", thread_ids=[thread.id])
             continue
                     
-        # [2] نظام التعامل مع العملاء والترحيب والحجز
+        # [2] نظام العملاء (الترحيب، الحجز، وجمع البيانات)
         full_name = thread.users[0].full_name or "عزيزي العميل"
         
         if sender_id in user_states:
@@ -116,13 +116,7 @@ def auto_reply():
                 
                 try:
                     admin_thread = cl.direct_thread_by_participants([admin_username])
-                    report = (
-                        f"⚠️ **طلب حجز جديد** ⚠️\n\n"
-                        f"👤 العميل: @{sender_username}\n"
-                        f"📦 المنتج: {state['product']}\n"
-                        f"📞 الهاتف: {state['phone']}\n"
-                        f"📍 العنوان: {state['address']}"
-                    )
+                    report = f"⚠️ **طلب حجز جديد** ⚠️\n\n👤 العميل: @{sender_username}\n📦 المنتج: {state['product']}\n📞 الهاتف: {state['phone']}\n📍 العنوان: {state['address']}"
                     cl.direct_send(report, thread_ids=[admin_thread.id])
                 except Exception as admin_err:
                     print(f"لم نتمكن من إرسال إشعار للمدير: {admin_err}")
@@ -132,7 +126,17 @@ def auto_reply():
 
         if sender_id not in welcomed_users:
             welcome_msg = f"👋 أهلاً بك يا {full_name} في متجرنا الإلكتروني!"
-            cl.direct_send(welcome_msg, thread_ids=
+            cl.direct_send(welcome_msg, thread_ids=[thread.id])
+            welcomed_users.add(sender_id)
+            time.sleep(1)
+        
+        if "حجز" in text:
+            product_name = text.replace("حجز", "").strip()
+            if product_name in products:
+                user_states[sender_id] = {
+                    "step": "waiting_for_phone",
+                    "product": product_name,
+                    "phone": "",
                     "address": ""
                 }
                 cl.direct_send(f"🛍️ لقد اخترت حجز: {product_name}.\nيرجى كتابة رقم هاتفك للتواصل ومتابعة الطلب:", thread_ids=[thread.id])
