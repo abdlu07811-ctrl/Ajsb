@@ -1,17 +1,87 @@
 from instagrapi import Client
+import time
+import os
 
+# إعداد العميل
 cl = Client()
-
-# نستخدم الجلسة مباشرة لتجاوز أي حظر أو تحدي أمني
 session_id = "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw"
+cl.login_by_sessionid(session_id)
 
-try:
-    cl.login_by_sessionid(session_id)
-    print("تم تسجيل الدخول بنجاح عبر الجلسة! البوت يعمل الآن.")
+admin_username = "85.kw"
+products_file = "products.txt"
+welcomed_users = set()
+
+# تحميل المنتجات من الملف
+def load_products():
+    if not os.path.exists(products_file):
+        # قائمة افتراضية إذا لم يوجد ملف
+        return {"منتج1": "50$"}
     
-    # هنا ضع الكود الخاص بمهام البوت (مثل الرد على الرسائل أو غيره)
-    # مثال:
-    # cl.inbox_seen()
-    
-except Exception as e:
-    print(f"حدث خطأ أثناء الاتصال: {e}")
+    products = {}
+    with open(products_file, "r") as f:
+        for line in f:
+            if ":" in line:
+                key, val = line.strip().split(":", 1)
+                products[key] = val
+    return products
+
+# حفظ المنتجات في الملف
+def save_products(products):
+    with open(products_file, "w") as f:
+        for k, v in products.items():
+            f.write(f"{k}:{v}\n")
+
+# تحميل المنتجات عند بداية التشغيل
+products = load_products()
+
+def auto_reply():
+    threads = cl.direct_threads(amount=5)
+    for thread in threads:
+        # التحقق من وجود رسائل في المحادثة
+        if not thread.messages: continue
+        
+        last_message = thread.messages[0]
+        sender_username = thread.users[0].username
+        sender_id = thread.users[0].pk
+        text = last_message.text
+        
+        # 1. أوامر المدير (من 85.kw)
+        if sender_username == admin_username:
+            if text.startswith("إضافة:"):
+                try:
+                    _, name, price = text.split(":")
+                    products[name] = price
+                    save_products(products)
+                    cl.direct_send(f"✅ تم حفظ {name} بسعر {price}", thread_ids=[thread.id])
+                except:
+                    cl.direct_send("خطأ في صيغة الإضافة. استخدم: إضافة:اسم:سعر", thread_ids=[thread.id])
+            
+            elif text.startswith("حذف:"):
+                _, name = text.split(":")
+                if name in products:
+                    del products[name]
+                    save_products(products)
+                    cl.direct_send(f"🗑️ تم حذف {name}", thread_ids=[thread.id])
+                    
+        # 2. الترحيب والرد الآلي للعملاء
+        elif last_message.user_id != cl.user_id:
+            # رسالة الترحيب مرة واحدة فقط
+            if sender_id not in welcomed_users:
+                full_name = thread.users[0].full_name or "عزيزي العميل"
+                welcome_msg = f"👋 أهلاً بك يا {full_name} في متجرنا!\nكيف يمكننا مساعدتك اليوم؟"
+                cl.direct_send(welcome_msg, thread_ids=[thread.id])
+                welcomed_users.add(sender_id)
+                time.sleep(2)
+            
+            # عرض القائمة
+            reply_text = "📦 قائمة منتجاتنا:\n" + "\n".join([f"🔹 {k}: {v}" for k, v in products.items()])
+            cl.direct_send(reply_text, thread_ids=[thread.id])
+
+print("البوت يعمل الآن بنجاح يا دراكون!")
+
+while True:
+    try:
+        auto_reply()
+    except Exception as e:
+        print(f"حدث خطأ في الدورة: {e}")
+    time.sleep(60) # الانتظار دقيقة قبل الفحص التالي
