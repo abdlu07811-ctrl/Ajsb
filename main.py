@@ -2,9 +2,10 @@ from instagrapi import Client
 import time
 import os
 
-# 1. إعداد العميل وتعطيل الطلبات العامة لتجنب الأخطاء
+# 1. إعداد العميل مع ضبط وكيل المستخدم لمنع خطأ الـ redirects
 cl = Client()
-cl.public_requests_enabled = False 
+cl.public_requests_enabled = False
+cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
 # الـ Session ID الخاص بك
 session_id = "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw"
@@ -20,7 +21,7 @@ admin_username = "85.kw"
 products_file = "products.txt"
 welcomed_users = set()
 
-# تحميل المنتجات
+# تحميل المنتجات من الملف
 def load_products():
     if not os.path.exists(products_file): return {"منتج1": "50$"}
     products = {}
@@ -31,7 +32,7 @@ def load_products():
                 products[key] = val
     return products
 
-# حفظ المنتجات
+# حفظ المنتجات في الملف
 def save_products(products):
     with open(products_file, "w") as f:
         for k, v in products.items():
@@ -48,7 +49,7 @@ def auto_reply():
         sender_id = thread.users[0].pk
         text = last_message.text
         
-        # أوامر المدير (85.kw)
+        # 1. أوامر المدير (85.kw)
         if sender_username == admin_username:
             if text.startswith("إضافة:"):
                 try:
@@ -65,7 +66,7 @@ def auto_reply():
                     save_products(products)
                     cl.direct_send(f"🗑️ تم حذف {name}", thread_ids=[thread.id])
                     
-        # الترحيب والحجز للعملاء
+        # 2. الترحيب والحجز للعملاء
         elif last_message.user_id != cl.user_id:
             # رسالة الترحيب
             if sender_id not in welcomed_users:
