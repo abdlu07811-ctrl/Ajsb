@@ -16,11 +16,11 @@ if os.path.exists(session_file):
         print("🔄 جاري تحميل الجلسة الجاهزة من الملف...")
         cl.load_settings(session_file)
         cl.user_id = "78306536983"
-        print("🚀 تم شحن الجلسة بنجاح! البوت مستعد الآن لقراءة الرسائل.")
+        print("🚀 تم شحن الجلسة بنجاح!")
     except Exception as e:
-        print(f"❌ فشل تشغيل الجلسة المرفوعة: {e}")
+        print(f"❌ فشل تشغيل الجلسة: {e}")
 else:
-    print("❌ خطأ: ملف instagram_session.json غير موجود في المستودع! يرجى إنشاؤه أولاً.")
+    print("❌ خطأ: ملف الجلسة غير موجود!")
 
 # إعداد المتغيرات والملفات لنظام المتجر
 admin_username = "85.kw"
@@ -53,4 +53,59 @@ products = load_products()
 
 def auto_reply():
     try:
-        threads = cl.direct_threads(amount=3
+        # تم تقصير السطر لمنع انقطاعه في الهاتف
+        threads = cl.direct_threads(amount=3)
+    except Exception as e:
+        print(f"جاري فحص الرسائل... (تحديث دوري): {e}")
+        return
+
+    for thread in threads:
+        if not thread.messages: 
+            continue
+        
+        last_message = thread.messages[0]
+        sender_username = thread.users[0].username
+        sender_id = thread.users[0].pk
+        text = last_message.text.strip()
+        
+        if last_message.user_id == cl.user_id:
+            continue
+
+        # [1] أوامر المسؤول (85.kw)
+        if sender_username == admin_username:
+            if text.startswith("إضافة:"):
+                try:
+                    _, name, price = text.split(":")
+                    products[name] = price
+                    save_products(products)
+                    cl.direct_send(f"✅ تم حفظ {name} بسعر {price}", thread_ids=[thread.id])
+                except:
+                    cl.direct_send("خطأ: استخدم (إضافة:اسم:سعر)", thread_ids=[thread.id])
+                continue
+            
+            if text.startswith("حذف:"):
+                try:
+                    _, name = text.split(":")
+                    if name in products:
+                        del products[name]
+                        save_products(products)
+                        cl.direct_send(f"🗑️ تم حذف {name}", thread_ids=[thread.id])
+                except:
+                    cl.direct_send("خطأ: استخدم (حذف:اسم)", thread_ids=[thread.id])
+                continue
+                    
+        # [2] نظام التعامل مع العملاء
+        full_name = thread.users[0].full_name or "عزيزي العميل"
+        
+        if sender_id in user_states:
+            state = user_states[sender_id]
+            if state["step"] == "waiting_for_phone":
+                state["phone"] = text
+                state["step"] = "waiting_for_address"
+                cl.direct_send("📍 ممتاز، والآن يرجى كتابة عنوانك بالتفصيل لشحن الطلب:", thread_ids=[thread.id])
+                continue
+            
+            if state["step"] == "waiting_for_address":
+                state["address"] = text
+                save_order(sender_username, full_name, state["product"], state["phone"], state["address"])
+                cl.direct_send(f"🎉 تم تأكيد حجزك لـ ({state
