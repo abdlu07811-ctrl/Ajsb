@@ -13,7 +13,6 @@ if os.path.exists(session_file):
     try:
         print("🔄 جاري تحميل الجلسة الجاهزة...")
         cl.load_settings(session_file)
-        # استخراج المعرف تلقائياً من الجلسة المحملة لضمان التوافق
         cl.user_id = cl.authenticated_user_id
         print(f"🚀 تم شحن الجلسة بنجاح! المعرف: {cl.user_id}")
     except Exception as e:
@@ -51,10 +50,10 @@ products = load_products()
 
 def auto_reply():
     try:
-        # استخدام دالة الجلب الافتراضية بدون مكملات لتفادي خطأ 400
-        threads = cl.direct_threads()
+        # حل مشكلة 400: تحديد المعاملات بدقة لإجبار المتصفح الوهمي على طلب سليم
+        threads = cl.direct_threads(amount=10, selected_filter="all")
     except Exception as e:
-        print(f"جاري فحص الرسائل... (تحديث دوري): {e}")
+        print(f"🔄 خطأ مؤقت في الاتصال (تحديث دوري): {e}")
         return
 
     for thread in threads:
@@ -143,6 +142,11 @@ def auto_reply():
         else:
             p_list = [f"🔹 {k}: {v}" for k, v in products.items()]
             reply_text = "📦 منتجاتنا الحالية:\n" + "\n".join(p_list) + "\n\n💡 للحجز أرسل: حجز اسم المنتج"
+            cl.direct_send(reply_text, thread_ids=[thread.id])
+
+while True:
+    auto_reply()
+    time.sleep(60)
             cl.direct_send(reply_text, thread_ids=[thread.id])
 
 while True:
