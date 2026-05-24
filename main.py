@@ -8,29 +8,40 @@ cl = Client()
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
-# 2. حقن إعدادات الجلسة والكوكيز المستخرجة من حسابك
-init_settings = {
-    "uuids": {
-        "phone_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
-        "uuid": "A4F839F0-4147-479E-80CE-4C542E5CD0BE",
-        "client_session_id": "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw",
-        "advertising_id": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
-    },
-    "cookies": [
-        {"name": "sessionid", "value": "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw", "domain": ".instagram.com", "path": "/"},
-        {"name": "ds_user_id", "value": "78306536983", "domain": ".instagram.com", "path": "/"},
-        {"name": "csrftoken", "value": "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt", "domain": ".instagram.com", "path": "/"},
-        {"name": "mid", "value": "ahl9eAABAAGhqrmqNLv14gpWLuW2", "domain": ".instagram.com", "path": "/"},
-        {"name": "ig_did", "value": "A4F839F0-4147-479E-80CE-4C542E5CD0BE", "domain": ".instagram.com", "path": "/"}
-    ]
-}
+# 2. قيم الجلسة المستخرجة من حسابك
+session_id = "78306536983%3AakVIDLasQXKnx6%3A18%3AAYf5bF1Y-y0L8G44n_t4yE1WlQp12P81a1N_gH5jAw"
+ds_user_id = "78306536983"
+csrftoken = "wIkI46YeMk1sRR3wdakZFZhXKKgC5mAt"
 
+# 3. إعداد وحقن الكوكيز بشكل فردي ومستقر لتفادي أخطاء البنية
 try:
-    cl.set_settings(init_settings)
-    cl.user_id = "78306536983"
-    print("✅ تم إعداد الجلسة بنجاح وتخطي الحظر!")
+    cl.set_settings({})  # تهيئة الإعدادات كقاموس فارغ أولاً
+    cl.user_id = ds_user_id
+    
+    # حقن الكوكيز الأساسية داخل دالة الكوكيز الخاصة بالعميل مباشرة
+    cl.set_cookies({
+        "sessionid": session_id,
+        "ds_user_id": ds_user_id,
+        "csrftoken": csrftoken,
+        "mid": "ahl9eAABAAGhqrmqNLv14gpWLuW2",
+        "ig_did": "A4F839F0-4147-479E-80CE-4C542E5CD0BE"
+    })
+    print("✅ تم حقن الكوكيز بنجاح!")
 except Exception as e:
-    print(f"⚠️ تنبيه أثناء ضبط الإعدادات: {e}")
+    print(f"⚠️ تنبيه أثناء إعداد الكوكيز: {e}")
+
+# آلية تحقق وتسجيل دخول احتياطية لضمان عمل البوت
+try:
+    print("🔄 جاري التحقق من حالة الجلسة...")
+    cl.get_timeline_feed()  # طلب خفيف للتحقق من الاتصال
+    print("🚀 تم الاتصال بنجاح! البوت يعمل الآن بدون قيود.")
+except Exception:
+    print("⚠️ الكوكيز المباشرة لم تنجح، جاري محاولة الدخول عبر معرف الجلسة الاحتياطي...")
+    try:
+        cl.login_by_sessionid(session_id)
+        print("✅ تم تسجيل الدخول بنجاح عبر معرف الجلسة!")
+    except Exception as login_err:
+        print(f"❌ فشل تسجيل الدخول النهائي: {login_err}")
 
 # إعداد المتغيرات والملفات
 admin_username = "85.kw"
