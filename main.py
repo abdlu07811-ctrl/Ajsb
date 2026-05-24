@@ -3,7 +3,6 @@ import time
 import os
 
 cl = Client()
-
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
@@ -50,7 +49,6 @@ products = load_products()
 
 def auto_reply():
     try:
-        # حل مشكلة 400: تحديد المعاملات بدقة لإجبار المتصفح الوهمي على طلب سليم
         threads = cl.direct_threads(amount=10, selected_filter="all")
     except Exception as e:
         print(f"🔄 خطأ مؤقت في الاتصال (تحديث دوري): {e}")
@@ -68,7 +66,6 @@ def auto_reply():
         if not text or last_message.user_id == cl.user_id:
             continue
 
-        # [1] أوامر المسؤول
         if sender_username == admin_username:
             if text.startswith("إضافة:"):
                 try:
@@ -92,7 +89,6 @@ def auto_reply():
                     cl.direct_send("خطأ: حذف:اسم", thread_ids=[thread.id])
                 continue
                     
-        # [2] نظام التعامل مع العملاء
         full_name = thread.users[0].full_name or "عزيزي"
         
         if sender_id in user_states:
@@ -143,6 +139,10 @@ def auto_reply():
             p_list = [f"🔹 {k}: {v}" for k, v in products.items()]
             reply_text = "📦 منتجاتنا الحالية:\n" + "\n".join(p_list) + "\n\n💡 للحجز أرسل: حجز اسم المنتج"
             cl.direct_send(reply_text, thread_ids=[thread.id])
+
+while True:
+    auto_reply()
+    time.sleep(60)
 
 while True:
     auto_reply()
