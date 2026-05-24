@@ -4,17 +4,17 @@ import os
 
 cl = Client()
 
-# إعدادات الحماية والتمويه لمنع الحظر
+# 1. إعدادات الحماية والتمويه لمنع الحظر والتوجيه
 cl.public_requests_enabled = False
 cl.set_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1")
 
-# بيانات حساب البوت - استبدلها ببياناتك الفعلية بدقة
+# بيانات حساب البوت الفردية - اكتب بياناتك هنا بدقة
 USERNAME = "os.wd" 
 PASSWORD = "07823520Aa"
 
 session_file = "instagram_session.json"
 
-# محاولة تسجيل الدخول الذكي
+# 2. آلية تسجيل دخول ذكية تتفادى خطأ CSRF وتنشئ جلسة جديدة ونظيفة
 try:
     if os.path.exists(session_file):
         print("🔄 جاري محاولة جلب الجلسة المحفوظة...")
@@ -23,20 +23,22 @@ try:
             cl.get_timeline_feed()
             print("🚀 تم تشغيل البوت بنجاح عبر الجلسة المحفوظة!")
         except Exception:
-            print("⚠️ انتهت صلاحية الجلسة المحفوظة، جاري إعادة تسجيل الدخول المباشر...")
+            print("⚠️ انتهت صلاحية الجلسة المحفوظة، جاري إعادة التوثيق...")
+            cl.setup_client()  # توليد وتحديث التوكنات بشكل نظيف
             cl.login(USERNAME, PASSWORD)
             cl.dump_settings(session_file)
             print("✅ تم تسجيل الدخول وتحديث ملف الجلسة بنجاح!")
     else:
-        print("🔐 جاري تسجيل الدخول المباشر لأول مرة...")
+        print("🔐 جاري تهيئة الاتصال وتسجيل الدخول المباشر لأول مرة...")
+        cl.setup_client()  # حل مشكلة CSRF token missing عبر تهيئة العميل أولاً
         cl.login(USERNAME, PASSWORD)
         cl.dump_settings(session_file)
         print("✅ تم تسجيل الدخول بنجاح وحفظ الجلسة!")
 except Exception as e:
     print(f"❌ فشل تسجيل الدخول: {e}")
-    print("💡 نصيحة: تأكد من إيقاف التحقق الثنائي (2FA) في الحساب، وافتح التطبيق للموافقة على تسجيل الدخول إذا ظهر لك تنبيه أمان.")
+    print("💡 نصيحة: إذا استمرت المشكلة، تأكد من فتح حساب البوت من الهاتف والموافقة على تنبيه الأمان (هذا أنا).")
 
-# إعداد المتغيرات والملفات لنظام المتجر
+# إعداد المتغيرات والملفات لنظام المتجر تلقائياً
 admin_username = "85.kw"
 products_file = "products.txt"
 orders_file = "orders.txt"
@@ -104,7 +106,7 @@ def auto_reply():
                     cl.direct_send("خطأ: استخدم صيغة (حذف:اسم)", thread_ids=[thread.id])
             continue
                     
-        # [2] نظام العملاء
+        # [2] نظام التعامل مع العملاء
         full_name = thread.users[0].full_name or "عزيزي العميل"
         
         if sender_id in user_states:
