@@ -49,6 +49,7 @@ products = load_products()
 
 def auto_reply():
     try:
+        # استخدام المعاملات الثابتة والأكيدة لتخطي حظر الـ 400 Bad Request
         threads = cl.direct_threads(amount=10, selected_filter="all")
     except Exception as e:
         print(f"🔄 خطأ مؤقت في الاتصال (تحديث دوري): {e}")
@@ -66,6 +67,7 @@ def auto_reply():
         if not text or last_message.user_id == cl.user_id:
             continue
 
+        # [1] لوحة تحكم المسؤول (85.kw)
         if sender_username == admin_username:
             if text.startswith("إضافة:"):
                 try:
@@ -89,6 +91,7 @@ def auto_reply():
                     cl.direct_send("خطأ: حذف:اسم", thread_ids=[thread.id])
                 continue
                     
+        # [2] نظام الرد التلقائي والحجز الآلي للعملاء
         full_name = thread.users[0].full_name or "عزيزي"
         
         if sender_id in user_states:
@@ -139,19 +142,6 @@ def auto_reply():
             p_list = [f"🔹 {k}: {v}" for k, v in products.items()]
             reply_text = "📦 منتجاتنا الحالية:\n" + "\n".join(p_list) + "\n\n💡 للحجز أرسل: حجز اسم المنتج"
             cl.direct_send(reply_text, thread_ids=[thread.id])
-
-while True:
-    auto_reply()
-    time.sleep(60)
-
-while True:
-    auto_reply()
-    time.sleep(60)
-            cl.direct_send(reply_text, thread_ids=[thread.id])
-
-while True:
-    auto_reply()
-    time.sleep(45)
 
 while True:
     auto_reply()
